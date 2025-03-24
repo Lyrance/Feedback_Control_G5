@@ -169,7 +169,7 @@ zntuner_yaw = ZNTuner("Yaw")
 TUNE_X = False
 TUNE_Y = False
 TUNE_Z = False
-TUNE_YAW = True
+TUNE_YAW = False
 
 if TUNE_X:
     zntuner_x.start_tuning()
@@ -276,6 +276,7 @@ def controller(state, target_pos, dt):
         internal_target_yaw = yaw
         last_target_pos = target_pos
         return (0, 0, 0, 0)
+    
 
     # 2) Compute error
     ex = tx - x
@@ -284,52 +285,39 @@ def controller(state, target_pos, dt):
     e_yaw = tyaw - yaw
     
     # Print if target is reached (xyz only)
-    if np.abs(ex) < 0.05 and np.abs(ey) < 0.05 and np.abs(ez) < 0.05:
-        print(f"[INFO] Reached xyz target!")
+    if np.abs(ex) < 0.05 and np.abs(ey) < 0.05 and np.abs(ez) < 0.05 and np.abs(e_yaw) < 0.05:
+        print(f"[INFO] Reached target!")
 
     # Step 1: If still in phase=1, only control xyz, yaw_rate = 0
-    if phase == 1:
-        # compute xyz pid
-        out_x = pid_x.control_update(np.array([ex,0,0]), dt)[0]
-        out_y = pid_y.control_update(np.array([ey,0,0]), dt)[0]
-        out_z = pid_z.control_update(np.array([ez,0,0]), dt)[0]
+    # if phase == 1:
+    # compute xyz pid
+    out_x = pid_x.control_update(np.array([ex,0,0]), dt)[0]
+    out_y = pid_y.control_update(np.array([ey,0,0]), dt)[0]
+    out_z = pid_z.control_update(np.array([ez,0,0]), dt)[0]
 
-        # yaw = 0 => yaw_rate = 0
-        out_yaw = 0
+    # yaw = 0 => yaw_rate = 0
+    out_yaw = 0
 
-        # Velocity saturation
-        vx = np.clip(out_x, -0.5, 0.5)
-        vy = np.clip(out_y, -0.5, 0.5)
-        vz = np.clip(out_z, -0.5, 0.5)
-        yaw_rate = 0
+    # Velocity saturation
+    vx_old = np.clip(out_x, -0.8, 0.8)
+    vy_old = np.clip(out_y, -0.8, 0.8)
+    vz = np.clip(out_z, -0.8, 0.8)
+    
+    # Translate from global vx,vy to local
+    vx = vx_old*np.cos(yaw)+vy_old*np.sin(yaw)
+    vy = -vx_old*np.sin(yaw)+vy_old*np.cos(yaw)
+    
+    # Smoothly update internal_target_yaw to gradually approach external tyaw
+    alpha = 0.1  # Update rate, can be tuned
+    internal_target_yaw = internal_target_yaw + alpha * (tyaw - internal_target_yaw)
+    
+    # Calculate yaw error and wrap to (-pi, pi)
+    e_yaw = internal_target_yaw - yaw
+    e_yaw = np.arctan2(np.sin(e_yaw), np.cos(e_yaw))
 
-        # If xyz error is small enough => switch to phase=2
-        if abs(ex)<0.01 and abs(ey)<0.01 and abs(ez)<0.01:
-            print("[DEBUG] xyz reached, now phase=2 => control yaw")
-            reset_all_pid()
-            phase = 2
+    # Use yaw PID controller to compute output
+    out_yaw = pid_yaw.control_update(np.array([e_yaw,0,0]), dt)[0]
+    yaw_rate = np.clip(out_yaw, -0.5, 0.5)
 
-        return (vx, vy, vz, yaw_rate)
+    return (vx, vy, vz, yaw_rate)
 
-    # Step 2: If phase=2, hold xyz or keep small Kp, control yaw
-    else:
-        # Optional: hold xyz, here we just let ex/ey/ez go to 0
-        out_x = pid_x.control_update(np.array([ex,0,0]), dt)[0]
-        out_y = pid_y.control_update(np.array([ey,0,0]), dt)[0]
-        out_z = pid_z.control_update(np.array([ez,0,0]), dt)[0]
-        vx = np.clip(out_x, -0.1, 0.1)
-        vy = np.clip(out_y, -0.1, 0.1)
-        vz = np.clip(out_z, -0.1, 0.1)
-
-        # Smoothly update internal_target_yaw to gradually approach external tyaw
-        alpha = 0.1  # Update rate, can be tuned
-        internal_target_yaw = internal_target_yaw + alpha * (tyaw - internal_target_yaw)
-        # Calculate yaw error and wrap to (-pi, pi)
-        e_yaw = internal_target_yaw - yaw
-        e_yaw = np.arctan2(np.sin(e_yaw), np.cos(e_yaw))
-
-        # Use yaw PID controller to compute output
-        out_yaw = pid_yaw.control_update(np.array([e_yaw,0,0]), dt)[0]
-        yaw_rate = np.clip(out_yaw, -0.5, 0.5)
-
-        return (vx, vy, vz, yaw_rate)
