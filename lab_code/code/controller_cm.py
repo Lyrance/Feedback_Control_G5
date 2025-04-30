@@ -151,6 +151,6 @@ def controller(state, target_pos, timestamp):
     # print(f"vx: {vx}, vy: {vy}, vz: {vz}, vyaw: {yaw_rate}")
     yaw_rate_deg = yaw_rate * 180.0 / np.pi
 
-    return (vx, vy, vz, yaw_rate)
+    return (vx*100, vy*100, vz*100, yaw_rate_deg)
 
 
