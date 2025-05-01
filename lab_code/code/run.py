@@ -7,6 +7,7 @@ from djitellopy import tello # need to be installed
 import numpy as np
 import csv
 import cv2
+import math
 
 VICON_ON = True
 
@@ -114,10 +115,10 @@ def main():
         # Call controller function
         timestamp = round(time.time() * 1000)
         vx, vy, vz, v_yaw = controller.controller(state, current_target, timestamp)
-        a = int(-vy) # left is negative in SDK
-        b = int(vx) # forward is negative
-        c = int(-vz) # up is negative
-        d = int(v_yaw)
+        a = int(-vy * 100) # left is negative in SDK
+        b = int(vx * 100) # forward is negative
+        c = int(vz * 100) # up is negative
+        d = int(math.degrees(v_yaw))
 
         a = clamp(a, max_speed)
         b = clamp(b, max_speed)
@@ -131,7 +132,7 @@ def main():
 
         position_error, yaw_error = calculate_error(state, current_target)
         print(f"position error: {position_error}")
-        if (abs(position_error) < POSITION_ERROR):
+        if ((abs(position_error) < POSITION_ERROR)):
              if (pose_index == len(target_poses) - 1):
                   print("Target sequence finished...")
                   print("Exiting and landing...")

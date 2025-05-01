@@ -48,13 +48,13 @@ def rotation_matrix(roll, pitch, yaw):
 
 DEBUG_MODE = False
 
-TELLO_VICON_NAME = "tello_marker_test" # Vicon object name
-TELLO_ID = "105" # Tello ID
+TELLO_VICON_NAME = "tello_marker3" # Vicon object name
+TELLO_ID = "111" # Tello ID
 
 POSITION_ERROR = 0.5
 YAW_ERROR = 0.5
 MAX_SPEED = 20
-last_timestamp_ms = None
+last_timestamp = None
 
 LOG_FILE = "output.csv"
 
@@ -77,18 +77,18 @@ def controller(state, target_pos, timestamp):
     x, y, z = state[0], state[1], state[2]
     yaw = state[5]
     
-    log_data(timestamp_ms, state, target_pos)
+    log_data(timestamp, state, target_pos)
     
-    print(f"x: {x}, y: {y}, z: {z}")
+    print(f"x: {x}, y: {y}, z: {z}, yaw: {yaw}")
     print(f"Target: {target_pos}")
     
-    global sim_time, last_target_pos, last_position, NotReached, last_timestamp_ms
+    global sim_time, last_target_pos, last_position, NotReached, last_timestamp
     sim_time = timestamp
-    if last_timestamp_ms is None:
+    if last_timestamp is None:
         dt = 1e-3               
     else:
-        dt = (timestamp_ms - last_timestamp_ms) / 1000.0
-    last_timestamp_ms = timestamp_ms
+        dt = (timestamp - last_timestamp) / 1000.0
+    last_timestamp = timestamp
 
     x, y, z, roll, pitch, yaw = state
     tx, ty, tz, tyaw = target_pos
