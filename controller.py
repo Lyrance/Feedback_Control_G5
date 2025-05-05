@@ -109,15 +109,9 @@ class ZNTuner:
 AUTO_TUNE = False
 
 # --- Initialize PID Controllers ---
-pid_pos = PIDController(
-    Kp=[0.4, 0.4, 0.6], Ki=[0.05, 0.05, 0.1], Kd=[0.2, 0.2, 0.3], K_i_limit=[1, 1, 1]
-)
-pid_vel = PIDController(
-    Kp=[0.3, 0.3, 0.5], Ki=[0.02, 0.02, 0.05], Kd=[0.15, 0.15, 0.2], K_i_limit=[0.5, 0.5, 0.5]
-)
-pid_att = PIDController(
-    Kp=[0.8, 0.8, 0.5], Ki=[0.0, 0.0, 0.01], Kd=[0.1, 0.1, 0.05], K_i_limit=[0.1, 0.1, 0.1]
-)
+pid_pos = PIDController([0.4, 0.4, 0.6], [0.05, 0.05, 0.1], [0.2, 0.2, 0.3], [1, 1, 1])
+pid_vel = PIDController([0.3, 0.3, 0.5], [0.02, 0.02, 0.05], [0.15, 0.15, 0.2], [0.5, 0.5, 0.5])
+pid_att = PIDController([0.8, 0.8, 0.5], [0, 0, 0.01], [0.1, 0.1, 0.05], [0.1, 0.1, 0.1])
 
 # Autotuner instance for position loop
 pos_tuner = ZNTuner(name="POS")
