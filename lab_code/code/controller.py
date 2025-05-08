@@ -14,7 +14,7 @@ from src.PID_controller import PIDController
 # Initialize PID controller
 pid_pos = PIDController([0.4, 0.4, 0.6], [0.05, 0.05, 0.1], [0.2, 0.2, 0.3], [1, 1, 1])
 pid_vel = PIDController([0.3, 0.3, 0.5], [0.02, 0.02, 0.05], [0.15, 0.15, 0.2], [0.5, 0.5, 0.5])
-pid_att = PIDController([0.8, 0.8, 0.5], [0, 0, 0.01], [0.1, 0.1, 0.05], [0.1, 0.1, 0.1])
+pid_att = PIDController([0.9, 0.8, 0.5], [0, 0, 0.01], [0.1, 0.1, 0.05], [0.1, 0.1, 0.1])
 
 last_target_pos = None
 last_position = None
@@ -51,12 +51,12 @@ DEBUG_MODE = False
 TELLO_VICON_NAME = "tello_marker3" # Vicon object name
 TELLO_ID = "111" # Tello ID
 
-POSITION_ERROR = 0.5
-YAW_ERROR = 0.5
-MAX_SPEED = 20
+POSITION_ERROR = 0.2
+YAW_ERROR = 0.2
+MAX_SPEED = 50
 last_timestamp = None
 
-LOG_FILE = "output.csv"
+LOG_FILE = "output-lab3.csv"
 
 def log_data(timestamp_ms, state, target_pos):
     """
@@ -93,9 +93,11 @@ def controller(state, target_pos, timestamp):
     x, y, z, roll, pitch, yaw = state
     tx, ty, tz, tyaw = target_pos
 
-    error_yaw = yaw-tyaw
-    while(error_yaw < 0):
-        error_yaw += 2*np.pi
+    error_yaw = tyaw-yaw
+    # while(error_yaw < 0):
+    #     error_yaw += 2*np.pi
+
+    print(f"error_yaw: {error_yaw}")
     # If reached target
     if np.abs(x-tx) + np.abs(y-ty) + np.abs(z-tz) + error_yaw < 0.1 and NotReached:
         NotReached = False
